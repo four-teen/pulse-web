@@ -7,13 +7,14 @@ type Props = {
   user: President
   activeFunction: FunctionId
   onFunctionSelect: (id: FunctionId) => void
+  onFacultyProfiles: () => void
   onClose: () => void
   onLogout: () => Promise<void>
   signingOut: boolean
   error: string
 }
 
-export default function MobileMoreMenu({ user, activeFunction, onFunctionSelect, onClose, onLogout, signingOut, error }: Props) {
+export default function MobileMoreMenu({ user, activeFunction, onFunctionSelect, onFacultyProfiles, onClose, onLogout, signingOut, error }: Props) {
   const dialog = useRef<HTMLDialogElement>(null)
   const shortcuts: { id: FunctionId; label: string; description: string; icon: DashboardIconName }[] = [
     { id: 'instruction', label: 'Instruction', description: 'Students & teaching', icon: 'students' },
@@ -40,7 +41,9 @@ export default function MobileMoreMenu({ user, activeFunction, onFunctionSelect,
       aria-label={`View ${shortcut.label.toLowerCase()} overview`} aria-pressed={activeFunction === shortcut.id}
       onClick={() => { dialog.current?.close(); onFunctionSelect(shortcut.id) }}>
       <span className="pd-shortcut-icon"><Icon name={shortcut.icon} size={22} /></span><strong>{shortcut.label}</strong><span>{shortcut.description}</span>
-    </button>)}</div>
+    </button>)}<button type="button" className="pd-more-faculty-link" onClick={() => { dialog.current?.close(); onFacultyProfiles() }}>
+      <span className="pd-shortcut-icon"><Icon name="faculty" size={22} /></span><strong>Faculty profiles</strong><span>Synk directory</span>
+    </button></div>
     <div className="pd-more-profile"><span className="pd-avatar">P</span><div><strong>{user.name || 'Office of the President'}</strong><span>Presidential access</span></div><Icon name="shield" size={20} /></div>
     {error && <p className="pd-error" role="alert">{error}</p>}
     <button type="button" className="pd-more-logout" disabled={signingOut} onClick={() => void onLogout()}><Icon name="logout" size={18} /><span>{signingOut ? 'Signing out...' : 'Sign out securely'}</span><Icon name="chevron" size={16} /></button>

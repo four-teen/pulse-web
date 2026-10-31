@@ -6,11 +6,13 @@ const allowedRoutes = new Map([
   ['v1/president/dashboard', 'GET'],
   ['v1/campuses', 'GET'],
   ['v1/integrations', 'GET'],
+  ['v1/faculty-profiles', 'GET'],
 ])
 
 export default async function handler(request, response) {
   response.setHeader('Cache-Control', 'no-store')
-  const path = new URL(request.url, 'https://pulse.local').pathname.replace(/^\/api\//, '')
+  const requestUrl = new URL(request.url, 'https://pulse.local')
+  const path = requestUrl.pathname.replace(/^\/api\//, '')
   if (!allowedRoutes.has(path)) return response.status(404).json({ message: 'Not found.' })
   if (request.method !== allowedRoutes.get(path)) {
     response.setHeader('Allow', allowedRoutes.get(path))
@@ -29,6 +31,8 @@ export default async function handler(request, response) {
     if (request.headers.origin) headers.Origin = request.headers.origin
     // Optional shared secret lets PHP reject direct traffic to these routes.
     if (process.env.PULSE_PROXY_SECRET) headers['X-Pulse-Proxy-Secret'] = process.env.PULSE_PROXY_SECRET
+    const upstreamUrl = new URL(path, origin)
+    upstreamUrl.search = requestUrl.search
     const options = { method: request.method, headers, redirect: 'error', signal: AbortSignal.timeout(12000) }
     if (request.method === 'POST') {
       if (!request.headers['content-type']?.startsWith('application/json')) {
@@ -38,7 +42,7 @@ export default async function handler(request, response) {
       options.body = JSON.stringify(request.body ?? {})
       if (Buffer.byteLength(options.body) > 4096) return response.status(413).json({ message: 'Request is too large.' })
     }
-    const upstream = await fetch(new URL(path, origin), options)
+    const upstream = await fetch(upstreamUrl, options)
     for (const cookie of upstream.headers.getSetCookie()) {
       if (cookie.startsWith('pulse_session=')) response.appendHeader('Set-Cookie', cookie)
     }

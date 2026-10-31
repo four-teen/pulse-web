@@ -6,10 +6,11 @@ import Icon, { type DashboardIconName } from './DashboardIcon'
 import { number, sourceStatusLabel, type Campus } from './data'
 import useDashboard from './useDashboard'
 import FourfoldSnapshot, { BuildingAssetsSnapshot, type FunctionId } from './FourfoldSnapshot'
+import FacultyProfilesSection from './FacultyProfilesSection'
 import './dashboard.css'
 
 type Props = { user: President; onLogout: () => Promise<void>; signingOut: boolean; error: string; onSessionExpired?: () => void }
-type Section = 'overview' | 'campus-network' | 'building-assets' | 'data-connections'
+type Section = 'overview' | 'campus-network' | 'building-assets' | 'faculty-profiles' | 'data-connections'
 
 function CampusLogo({ campus, large = false }: { campus: Campus; large?: boolean }) {
   return <span className={'pd-campus-logo' + (large ? ' is-large' : '')}
@@ -66,6 +67,7 @@ export default function PresidentDashboard({ user, onLogout, signingOut, error, 
     { id: 'overview', label: 'University overview', icon: 'overview' },
     { id: 'campus-network', label: 'Campus directory', icon: 'campus' },
     { id: 'building-assets', label: 'Buildings & assets', icon: 'buildings' },
+    { id: 'faculty-profiles', label: 'Faculty profiles', icon: 'faculty' },
     { id: 'data-connections', label: 'Data connections', icon: 'connections' },
   ]
 
@@ -80,7 +82,7 @@ export default function PresidentDashboard({ user, onLogout, signingOut, error, 
 
   useEffect(() => {
     let frame = 0
-    const sections: Section[] = ['overview', 'building-assets', 'campus-network', 'data-connections']
+    const sections: Section[] = ['overview', 'building-assets', 'campus-network', 'faculty-profiles', 'data-connections']
     function updateSection() {
       frame = 0
       let current: Section = 'overview'
@@ -151,6 +153,8 @@ export default function PresidentDashboard({ user, onLogout, signingOut, error, 
           {visibleCampuses.length ? <div className={'pd-campus-grid' + (query.trim() ? ' is-filtered' : '')}>{visibleCampuses.map((campus, index) => <button key={campus.id} className={'pd-campus-card' + (campus.id === 'access' && !query.trim() ? ' is-featured' : '')} onClick={() => setDetail(campus)} aria-label={`View ${campus.name} Campus details`}><div className="pd-campus-card-top"><CampusLogo campus={campus} /><span className="pd-campus-index">{String(campuses.indexOf(campus) + 1).padStart(2, '0')}</span></div><div className="pd-campus-card-name"><h3>{campus.name}<span>Campus</span></h3>{index === 0 && !query.trim() && <p>A connected view of our<br />university community.</p>}</div><div className="pd-campus-card-stat"><strong>{number(campus.students)}</strong><span>enrolled students</span></div><div className="pd-campus-card-footer"><span>{campus.programs === null ? 'Programs awaiting data' : number(campus.programs) + ' program offerings'}</span><span className="pd-campus-open"><Icon name="arrow" size={16} /></span></div></button>)}</div> : <div className="pd-empty-state"><Icon name={query ? 'search' : 'campus'} size={25} /><h3>{loading ? 'Loading campus records...' : recordsError ? 'Campus records are unavailable.' : query ? `No campus matches “${query}”.` : 'Awaiting campus records.'}</h3><p>{query ? 'Try another campus name.' : 'The campus directory will appear when records are available.'}</p>{query && <button onClick={() => setQuery('')}>Show all campuses</button>}</div>}
         </section>
 
+        <FacultyProfilesSection onSessionExpired={onSessionExpired} />
+
         <section className="pd-connections-section" id="data-connections" tabIndex={-1} aria-labelledby="connections-title">
           <div className="pd-section-heading"><div><p className="pd-kicker">THE FOUNDATION FOR REAL-TIME INSIGHTS</p><h2 id="connections-title">One view. Connected systems.</h2><p>Source availability and the latest university records.</p></div>{data && <span className="pd-connection-count">{data.sources.filter(source => source.status === 'connected').length} of {data.sources.length} sources connected</span>}</div>
           <div className="pd-connection-grid">{data?.sources.map(source => <article key={source.id} className="pd-source-card"><span className={`pd-source-mark ${source.id}`}>{source.name[0]}</span><div><h3><a href={source.website} target="_blank" rel="noopener noreferrer" aria-label={`Open ${source.name} website`}>{source.name}</a></h3><span className={'pd-source-state ' + source.status}><i />{sourceStatusLabel[source.status]}</span>{source.updatedAt && <time dateTime={source.updatedAt}>{new Intl.DateTimeFormat('en-PH', { dateStyle: 'medium', timeZone: 'Asia/Manila' }).format(new Date(source.updatedAt))}</time>}</div><Icon name="connections" size={18} /></article>)}</div>
@@ -173,7 +177,7 @@ export default function PresidentDashboard({ user, onLogout, signingOut, error, 
         className={moreOpen ? 'is-menu-open' : ''} onClick={() => setMoreOpen(true)}><span><Icon name="menu" size={22} /></span>More</button>
     </nav>
     {moreOpen && <MobileMoreMenu user={user} activeFunction={activeFunction} onFunctionSelect={id => { setActiveFunction(id); navigate('overview') }}
-      onClose={() => setMoreOpen(false)} onLogout={onLogout} signingOut={signingOut} error={error} />}
+      onFacultyProfiles={() => navigate('faculty-profiles')} onClose={() => setMoreOpen(false)} onLogout={onLogout} signingOut={signingOut} error={error} />}
     {detail && <CampusDetails campus={detail} periodLabel={data?.periodLabel ?? null} onClose={() => setDetail(null)} onOverview={id => { setCampusFilter(id); navigate('overview') }} />}
   </div>
 }
