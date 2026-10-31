@@ -1,6 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import handler from '../api/[...path].js'
+import handler from '../api/proxy.js'
+import { readFile } from 'node:fs/promises'
 
 function response() {
   return {
@@ -75,6 +76,37 @@ test('Vercel authentication proxy', async t => {
     await handler(request, result)
     assert.equal(result.statusCode, 502)
     assert.doesNotMatch(JSON.stringify(result.payload), /private path/)
+  })
+  await t.test('routes Vercel API URLs through the configured function and preserves filters', async () => {
+    const config = JSON.parse(await readFile(new URL('../vercel.json', import.meta.url), 'utf8'))
+    const rewrite = config.rewrites.find(route => route.source === '/api/:path*')
+    assert.ok(rewrite, 'API requests must be routed to a named Vercel function')
+    const destination = new URL(rewrite.destination, 'https://pulse.example.test')
+    const { default: deployedHandler } = await import(`..${destination.pathname}.js`)
+    process.env.PULSE_API_ORIGIN = 'https://api.example.test'
+    for (const [path, method, status] of [
+      ['auth/session', 'GET', 401], ['auth/login', 'POST', 401],
+      ['auth/logout', 'POST', 200], ['v1/president/dashboard', 'GET', 200],
+      ['v1/campuses', 'GET', 200], ['v1/integrations', 'GET', 200],
+      ['v1/faculty-profiles', 'GET', 200],
+    ]) {
+      globalThis.fetch = async (url, options) => {
+        assert.equal(url.href, `https://api.example.test/${path}?campus=main&page=2`)
+        assert.equal(options.method, method)
+        return new Response('{"message":"test response"}', { status, headers: { 'Content-Type': 'application/json' } })
+      }
+      for (const url of [
+        `/api/${path}?campus=main&page=2`,
+        rewrite.destination.replace(':path*', path) + '&campus=main&page=2',
+      ]) {
+        const result = response()
+        await deployedHandler({ ...request, method, url }, result)
+        assert.equal(result.statusCode, status, `${method} ${url}`)
+      }
+    }
+    const result = response()
+    await deployedHandler({ ...request, url: rewrite.destination.replace(':path*', 'v1/integrations/sinq/sync') }, result)
+    assert.equal(result.statusCode, 404)
   })
   await t.test('preserves rate-limit status and retry delay', async () => {
     globalThis.fetch = async () => new Response('{"message":"Please wait."}', { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': '120' } })

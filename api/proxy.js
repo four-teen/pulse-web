@@ -12,7 +12,12 @@ const allowedRoutes = new Map([
 export default async function handler(request, response) {
   response.setHeader('Cache-Control', 'no-store')
   const requestUrl = new URL(request.url, 'https://pulse.local')
-  const path = requestUrl.pathname.replace(/^\/api\//, '')
+  // Vercel's Vite preset needs an explicit rewrite to this named function.
+  // Accept both the original URL and the rewritten function URL.
+  const path = requestUrl.pathname === '/api/proxy'
+    ? requestUrl.searchParams.get('__pulse_path') ?? ''
+    : requestUrl.pathname.replace(/^\/api\//, '')
+  requestUrl.searchParams.delete('__pulse_path')
   if (!allowedRoutes.has(path)) return response.status(404).json({ message: 'Not found.' })
   if (request.method !== allowedRoutes.get(path)) {
     response.setHeader('Allow', allowedRoutes.get(path))

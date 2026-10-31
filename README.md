@@ -31,7 +31,7 @@ Requires Node.js 22 and PHP 8.1 or newer for the separate API.
 
 Upload **this folder** as the frontend repository. Dependencies and generated files are excluded by `.gitignore`. Commit `package-lock.json`.
 
-Import the repository in Vercel using the Vite preset. `vercel.json` sets `npm run build` and output `dist`; `api/[...path].js` forwards the allowlisted authentication and read-only `/v1/` dashboard routes to PHP. It does not expose source synchronization or arbitrary API paths.
+Import the repository in Vercel using the Vite preset. `vercel.json` sets `npm run build` and output `dist`, and explicitly rewrites `/api/:path*` to the named `api/proxy.js` function. The proxy forwards the allowlisted authentication and read-only `/v1/` dashboard routes to PHP. It does not expose source synchronization or arbitrary API paths. A bracket-named catch-all file alone does not route these nested URLs with this Vite deployment.
 
 Set these **server-side Vercel environment variables**:
 
@@ -43,6 +43,8 @@ Set these **server-side Vercel environment variables**:
 On the PHP host set `APP_ENV=production` and `APP_URL` to the exact final frontend origin (e.g. `https://pulse.example.edu.ph`). Then deploy/redeploy Vercel. Each additional preview origin requires its own API configuration; arbitrary preview domains are deliberately rejected.
 
 The passcode belongs only in the API's `.env`. Do not use `VITE_` variables for passcodes or secrets: those are public browser configuration. The proxy keeps the HttpOnly session cookie on the web app's domain, so the API may live on a separate hosting domain without cross-site cookies or browser CORS configuration.
+
+After deployment, request `/api/auth/session` while signed out. It should return the PHP API's JSON `401` response, not Vercel's HTML `404 NOT_FOUND` page. A working PHP `/health` endpoint checks only the backend; it does not check Vercel's proxy routing. If the browser reports a blocked `vercel.live/_next-live/feedback/feedback.js`, that is Vercel Toolbar injection blocked by the portal's script policy and is separate from authentication routing.
 
 ## Behavior
 
