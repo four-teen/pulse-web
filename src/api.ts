@@ -1,4 +1,5 @@
 import { parseDashboard } from './modules/president/data'
+import { parseFacultyProfilePage } from './modules/president/faculty'
 
 export type President = { name: string; role: string }
 
@@ -35,5 +36,12 @@ export const presidentApi = {
     const data = await request<unknown>('/v1/president/dashboard')
     try { return parseDashboard(data) }
     catch { throw new ApiError('University records could not be read. Please try again or contact your system administrator.', 502) }
+  },
+  facultyProfiles: async (query: string, offset: number) => {
+    const params = new URLSearchParams({ limit: '50', offset: String(offset) })
+    if (query) params.set('q', query)
+    const data = await request<unknown>(`/v1/faculty-profiles?${params.toString()}`)
+    try { return parseFacultyProfilePage(data) }
+    catch { throw new ApiError('Synk faculty profiles could not be read. Please try again or contact your system administrator.', 502) }
   },
 }

@@ -66,6 +66,8 @@ The passcode belongs only in the API's `.env`. Do not use `VITE_` variables for 
 
 The API's [integration guide](../pulse-api/docs/integrations.md) and [OpenAPI file](../pulse-api/docs/openapi.yaml) describe the prepared contracts. Confirm actual source routes, credentials, campus mappings, periods and category ownership later; the website addresses alone are not API documentation. No source is automatically enabled and no scheduler has been installed.
 
+Synk faculty profiles are the first read-only detail feed. PULSE syncs a curated profile snapshot from the single Synk PHP endpoint when an operator runs `php bin/sync.php --faculty-profiles`; the president's Faculty profiles view reads the private PULSE snapshot. It never writes to Synk or calls Synk from the browser. The endpoint must first be deployed to Synk, and its cPanel bearer-token environment variable must match `SINQ_API_TOKEN` on the PULSE PHP host.
+
 Before deploying the PHP side, run its production configuration check and set the final hosting origins. Confirm the Paola font's public institutional/web-embedding permission using the included font notice. No GitHub push, Vercel publication or external source connection is performed by local builds.
 
 ## Verification
