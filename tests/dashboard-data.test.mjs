@@ -3,7 +3,10 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import ts from 'typescript'
 
-const source = await readFile(new URL('../src/modules/president/data.ts', import.meta.url), 'utf8')
+const academicSource = await readFile(new URL('../src/modules/president/academics.ts', import.meta.url), 'utf8')
+const academicCompiled = ts.transpileModule(academicSource, { compilerOptions: { module: ts.ModuleKind.ES2022, target: ts.ScriptTarget.ES2022 } }).outputText
+const academicModule = `data:text/javascript;base64,${Buffer.from(academicCompiled).toString('base64')}`
+const source = (await readFile(new URL('../src/modules/president/data.ts', import.meta.url), 'utf8')).replace("'./academics'", JSON.stringify(academicModule))
 const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ES2022, target: ts.ScriptTarget.ES2022 } }).outputText
 const { summarizeCampuses, number, millions, percent, percentage, difference, parseDashboard } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString('base64')}`)
 
@@ -22,6 +25,29 @@ function payload() {
     { id: 'pad', name: 'PAD', website: 'https://pad-web-coral.vercel.app/', status: 'not_connected', updatedAt: null },
   ] }
 }
+
+test('faculty summary accepts unknown campus totals and rejects misleading or malformed counts', () => {
+  const data = payload()
+  data.facultyDirectory = { total: 469, byCampus: Object.fromEntries(ids.map(id => [id, null])), retrievedAt: '2026-11-01T00:00:00Z' }
+  assert.equal(parseDashboard(data).facultyDirectory.total, 469)
+  data.facultyDirectory.byCampus = Object.fromEntries(ids.map(id => [id, 0]))
+  assert.throws(() => parseDashboard(data), /faculty totals/)
+  data.facultyDirectory.total = 0
+  assert.equal(parseDashboard(data).facultyDirectory.total, 0)
+  data.facultyDirectory.total = -1
+  assert.throws(() => parseDashboard(data), /faculty totals/)
+  data.facultyDirectory.total = 0
+  delete data.facultyDirectory.byCampus.access
+  assert.throws(() => parseDashboard(data), /faculty totals/)
+})
+
+test('distinct faculty totals allow people serving in multiple campuses without double-counting the university', () => {
+  const data = payload()
+  data.facultyDirectory = { total: 2, byCampus: Object.fromEntries(ids.map(id => [id, id === 'access' || id === 'isulan' ? 2 : 0])), retrievedAt: '2026-11-01T00:00:00Z' }
+  assert.equal(parseDashboard(data).facultyDirectory.total, 2)
+  data.facultyDirectory.byCampus.access = 3
+  assert.throws(() => parseDashboard(data), /faculty totals/)
+})
 
 test('unavailable records remain unknown while reported zero remains zero', () => {
   const record = campus('access')

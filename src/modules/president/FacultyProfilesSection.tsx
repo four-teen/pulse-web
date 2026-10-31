@@ -45,8 +45,8 @@ export default function FacultyProfilesSection({ onSessionExpired }: { onSession
 
   return <section className="pd-faculty-section" id="faculty-profiles" tabIndex={-1} aria-labelledby="faculty-profiles-title">
     <div className="pd-section-heading">
-      <div><p className="pd-kicker">{page?.mode === 'local_test' ? 'LOCAL TEST · LOOPBACK ONLY' : 'READ-ONLY SOURCE: SYNK'}</p><h2 id="faculty-profiles-title">Faculty profiles</h2><p>Faculty records synchronized from Synk for viewing in PULSE.</p></div>
-      <button className="pd-faculty-refresh" type="button" onClick={() => setRevision(value => value + 1)} disabled={loading} aria-label="Refresh faculty profiles"><Icon name="refresh" size={16} />Refresh</button>
+      <div><p className="pd-kicker">{page?.mode === 'local_test' ? 'LOCAL TEST · LOOPBACK ONLY' : 'READ-ONLY SOURCE: SYNK'}</p><h2 id="faculty-profiles-title">Faculty profiles</h2><p>Faculty records retrieved from Synk. Profile changes are managed in Synk.</p></div>
+      <button className="pd-faculty-refresh" type="button" onClick={() => setRevision(value => value + 1)} disabled={loading} aria-label="Refresh faculty profiles view" title="Reload the latest copy retrieved by PULSE"><Icon name="refresh" size={16} />Refresh view</button>
     </div>
     {error && <div className="pd-faculty-message is-error" role="alert"><Icon name="info" size={17} /><span>{error}</span></div>}
     {!error && unavailable && <div className="pd-faculty-message" role="status"><Icon name="info" size={17} /><span>Synk faculty profile sync is not enabled on the PULSE API.</span></div>}
@@ -66,6 +66,6 @@ export default function FacultyProfilesSection({ onSessionExpired }: { onSession
           </div>
         </article>)}</div>}
     <div className="pd-faculty-pagination"><button type="button" onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))} disabled={loading || offset === 0}>Previous</button><span>{total ? `Showing ${start.toLocaleString('en-PH')}–${end.toLocaleString('en-PH')}` : 'No records'}</span><button type="button" onClick={() => setOffset(offset + PAGE_SIZE)} disabled={loading || end >= total}>Next</button></div>
-    {page?.observedAt && <p className="pd-faculty-updated">Synk data last synchronized {new Intl.DateTimeFormat('en-PH', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Manila' }).format(new Date(page.observedAt))}.</p>}
+    {page?.observedAt && <p className="pd-faculty-updated">Last retrieved from Synk {new Intl.DateTimeFormat('en-PH', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Manila' }).format(new Date(page.observedAt))}.</p>}
   </section>
 }
