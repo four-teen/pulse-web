@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } f
 import Icon, { type DashboardIconName } from './DashboardIcon'
 import { add, difference, millions, number, percent, percentage, summarizeCampuses, type Campus, type MetricValue } from './data'
 
-export type FunctionId = 'instruction' | 'research' | 'extension' | 'production'
+export type FunctionId = 'overview' | 'instruction' | 'research' | 'extension' | 'production'
 type Metric = { label: string; value: string; icon: DashboardIconName; footer: string; tint: string }
 type FunctionView = {
   label: string
@@ -15,19 +15,32 @@ type FunctionView = {
   progress: { title: string; label: string; value: MetricValue; description: string; achieved: string; remaining: string }
 }
 
-const functionOrder: FunctionId[] = ['instruction', 'research', 'extension', 'production']
+const functionOrder: FunctionId[] = ['overview', 'instruction', 'research', 'extension', 'production']
 
-function functionViews(items: Campus[]): Record<FunctionId, FunctionView> {
+function functionViews(items: Campus[], facultyCount?: MetricValue, studentCount?: MetricValue): Record<FunctionId, FunctionView> {
   const summary = summarizeCampuses(items)
+  if (facultyCount !== undefined) summary.faculty = facultyCount
+  if (studentCount !== undefined) summary.students = studentCount
   const researchTotal = add(summary.research.active, summary.research.completed)
   const extensionTotal = add(summary.extension.active, summary.extension.completed)
   const productionIncome = difference(summary.production.revenue, summary.production.expenses)
   const facultyRatio = summary.students !== null && summary.faculty !== null && summary.faculty > 0 ? Math.round(summary.students / summary.faculty) : null
   return {
+    overview: {
+      label: 'Overview', icon: 'overview', description: 'People, research, and university enterprises.', money: false,
+      metrics: [
+        { label: 'Faculty members', value: number(summary.faculty), icon: 'faculty', footer: 'Distinct faculty in current-term college lists', tint: 'green' },
+        { label: 'Enrolled students', value: number(summary.students), icon: 'students', footer: 'Unique names in active class lists', tint: 'gold' },
+        { label: 'Research count', value: number(researchTotal), icon: 'research', footer: 'Active and completed studies', tint: 'blue' },
+        { label: 'IGP', value: number(summary.production.enterprises), icon: 'production', footer: 'Income-generating projects', tint: 'sage' },
+      ],
+      measures: ['Students', 'Faculty'], compare: (campus, measure) => measure === 0 ? campus.students : campus.faculty,
+      progress: { title: 'University overview', label: 'OVERVIEW', value: null, description: '', achieved: '', remaining: '' },
+    },
     instruction: {
       label: 'Instruction', icon: 'students', description: 'Learning, teaching, and student success.', money: false,
       metrics: [
-        { label: 'Enrolled students', value: number(summary.students), icon: 'students', footer: summary.growth === null ? 'Student enrollment records' : `${summary.growth >= 0 ? '+' : ''}${percent(summary.growth)} vs. previous period`, tint: 'green' },
+        { label: 'Enrolled students', value: number(summary.students), icon: 'students', footer: 'Unique names in active class lists', tint: 'green' },
         { label: 'Faculty members', value: number(summary.faculty), icon: 'faculty', footer: facultyRatio === null ? 'Faculty records' : `${facultyRatio}:1 student–faculty ratio`, tint: 'gold' },
         { label: 'Program offerings', value: number(summary.programs), icon: 'programs', footer: 'Across the selected campuses', tint: 'blue' },
         { label: 'Student retention', value: percent(summary.retention), icon: 'trend', footer: 'Weighted by enrolled students', tint: 'sage' },
@@ -71,7 +84,7 @@ function functionViews(items: Campus[]): Record<FunctionId, FunctionView> {
   }
 }
 
-export default function FourfoldSnapshot({ items, scopeLabel, idPrefix, compact = false, comparisonItems = items, selectedCampusId, onCampusSelect, selectedFunction, onFunctionChange }: {
+export default function FourfoldSnapshot({ items, scopeLabel, idPrefix, compact = false, comparisonItems = items, selectedCampusId, onCampusSelect, selectedFunction, onFunctionChange, facultyCount, studentCount }: {
   items: Campus[]
   scopeLabel: string
   idPrefix: string
@@ -81,12 +94,15 @@ export default function FourfoldSnapshot({ items, scopeLabel, idPrefix, compact 
   onCampusSelect?: (id: string) => void
   selectedFunction?: FunctionId
   onFunctionChange?: (id: FunctionId) => void
+  facultyCount?: MetricValue
+  studentCount?: MetricValue
 }) {
-  const [localFunction, setLocalFunction] = useState<FunctionId>('instruction')
+  const [localFunction, setLocalFunction] = useState<FunctionId>(compact ? 'instruction' : 'overview')
+  const tabs = functionOrder.filter(id => id !== 'overview')
   const activeFunction = selectedFunction ?? localFunction
   const [measure, setMeasure] = useState(0)
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
-  const views = functionViews(items)
+  const views = functionViews(items, facultyCount, studentCount)
   const view = views[activeFunction]
   const chartValues = comparisonItems.map(campus => view.compare(campus, measure)).filter((value): value is number => value !== null)
   const largestValue = Math.max(1, ...chartValues.map(Math.abs))
@@ -101,31 +117,31 @@ export default function FourfoldSnapshot({ items, scopeLabel, idPrefix, compact 
 
   function handleTabKey(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     let next = index
-    if (event.key === 'ArrowRight') next = (index + 1) % functionOrder.length
-    else if (event.key === 'ArrowLeft') next = (index - 1 + functionOrder.length) % functionOrder.length
+    if (event.key === 'ArrowRight') next = (index + 1) % tabs.length
+    else if (event.key === 'ArrowLeft') next = (index - 1 + tabs.length) % tabs.length
     else if (event.key === 'Home') next = 0
-    else if (event.key === 'End') next = functionOrder.length - 1
+    else if (event.key === 'End') next = tabs.length - 1
     else return
     event.preventDefault()
-    selectFunction(functionOrder[next])
+    selectFunction(tabs[next])
     tabRefs.current[next]?.focus()
   }
 
   return <div className={'pd-fourfold' + (compact ? ' is-compact' : '')}>
-    <div className="pd-function-tabs" role="tablist" aria-label={`${scopeLabel} fourfold functions`}>
-      {functionOrder.map((id, index) => <button key={id} ref={element => { tabRefs.current[index] = element }} type="button" role="tab"
+    <div className="pd-function-tabs" role="tablist" aria-label={`${scopeLabel} dashboard views`}>
+      {tabs.map((id, index) => <button key={id} ref={element => { tabRefs.current[index] = element }} type="button" role="tab"
         id={`${idPrefix}-tab-${id}`} aria-controls={`${idPrefix}-panel-${id}`} aria-selected={activeFunction === id}
-        tabIndex={activeFunction === id ? 0 : -1} onClick={() => selectFunction(id)} onKeyDown={event => handleTabKey(event, index)}>
+        tabIndex={activeFunction === id || activeFunction === 'overview' && index === 0 ? 0 : -1} onClick={() => selectFunction(id)} onKeyDown={event => handleTabKey(event, index)}>
         <Icon name={views[id].icon} size={18} /><span>{views[id].label}</span><span className="pd-function-number" aria-hidden="true">0{index + 1}</span>
       </button>)}
     </div>
 
-    {functionOrder.map(id => <div key={id} role="tabpanel" id={`${idPrefix}-panel-${id}`} aria-labelledby={`${idPrefix}-tab-${id}`} tabIndex={0} hidden={activeFunction !== id}>
+    {functionOrder.map(id => <div key={id} role={id === 'overview' ? 'region' : 'tabpanel'} id={`${idPrefix}-panel-${id}`} aria-label={id === 'overview' ? 'University overview' : undefined} aria-labelledby={id === 'overview' ? undefined : `${idPrefix}-tab-${id}`} tabIndex={0} hidden={activeFunction !== id}>
       {activeFunction === id && <>
         <div className="pd-function-context"><span>{view.label}</span><p>{view.description}</p></div>
         <div className="pd-metric-grid">{view.metrics.map(metric => <article key={metric.label} className="pd-metric-card"><div className="pd-metric-top"><span>{metric.label}</span><span className={`pd-metric-icon ${metric.tint}`}><Icon name={metric.icon} size={19} /></span></div><strong className={'pd-metric-number' + (metric.value === '—' ? ' is-missing' : '')}>{metric.value}</strong><div className="pd-metric-footer"><span>{metric.footer}</span></div></article>)}</div>
 
-        {!compact && <div className="pd-chart-grid">
+        {!compact && activeFunction !== 'overview' && <div className="pd-chart-grid">
           <section className="pd-panel pd-enrollment-panel" aria-labelledby={`${idPrefix}-distribution-title`}>
             <div className="pd-panel-heading"><div><h2 id={`${idPrefix}-distribution-title`}>{view.label} by campus</h2><p>{view.description}</p></div><div className="pd-segmented" aria-label={`Compare ${view.label.toLowerCase()} statistics`}>{view.measures.map((label, index) => <button key={label} type="button" aria-pressed={measure === index} onClick={() => setMeasure(index)}>{label}</button>)}</div></div>
             {chartValues.length > 0 ? <>
@@ -134,7 +150,7 @@ export default function FourfoldSnapshot({ items, scopeLabel, idPrefix, compact 
                 const value = view.compare(campus, measure)
                 const width = value === null ? 0 : Math.abs(value) / maximum * (hasNegative ? 50 : 100)
                 return <button key={campus.id} type="button" className={'pd-chart-row' + (selectedCampusId === campus.id ? ' is-selected' : '') + (selectedCampusId && selectedCampusId !== campus.id ? ' is-muted' : '')}
-                  aria-label={`${campus.name}: ${value === null ? 'awaiting data' : formatChart(value) + ' ' + view.measures[measure].toLowerCase()}. Filter overview.`}
+                  aria-label={`${campus.name}: ${value === null ? 'not reported' : formatChart(value) + ' ' + view.measures[measure].toLowerCase()}. Filter overview.`}
                   aria-pressed={selectedCampusId === campus.id} onClick={() => onCampusSelect?.(selectedCampusId === campus.id ? 'all' : campus.id)}>
                   <span className="pd-bar-label">{campus.name}</span><span className="pd-bar-track" style={{ '--zero-position': hasNegative ? '50%' : '0%' } as CSSProperties}>
                     {value !== null && value !== 0 && <span className="pd-bar-fill" style={{ position: 'absolute', left: `${(hasNegative ? 50 : 0) - (value < 0 ? width : 0)}%`, width: `${width}%`, background: value < 0 ? '#a8654c' : campus.color }} />}
@@ -142,14 +158,14 @@ export default function FourfoldSnapshot({ items, scopeLabel, idPrefix, compact 
                 </button>
               })}</div>
               <div className="pd-chart-footer"><span><i />{view.measures[measure]} · {scopeLabel}</span><span>Select a campus to focus</span></div>
-            </> : <div className="pd-records-empty"><span><Icon name={view.icon} size={27} /></span><h3>Awaiting {view.label.toLowerCase()} records</h3><p>Campus comparisons will appear when records become available.</p></div>}
+            </> : <div className="pd-records-empty"><span><Icon name={view.icon} size={27} /></span><h3>{view.label} by campus</h3><p>No figures reported for this view.</p></div>}
           </section>
 
           <section className="pd-panel pd-retention-panel" aria-labelledby={`${idPrefix}-progress-title`}>
             <div className="pd-panel-heading"><div><h2 id={`${idPrefix}-progress-title`}>{view.progress.title}</h2><p>{view.progress.description}</p></div><span className="pd-panel-small-icon"><Icon name={view.icon} size={20} /></span></div>
-            <div className={'pd-retention-ring' + (view.progress.value === null ? ' is-empty' : '')} role="img" aria-label={`${view.progress.label.toLowerCase()}: ${view.progress.value === null ? 'awaiting data' : percent(view.progress.value)}`} style={{ '--retention': `${Math.min(100, Math.max(0, view.progress.value ?? 0))}%` } as CSSProperties}><div><span>{view.progress.label}</span><strong>{view.progress.value === null ? '—' : <>{view.progress.value.toFixed(1)}<small>%</small></>}</strong><span>{view.progress.value === null ? 'Awaiting data' : scopeLabel}</span></div></div>
+            <div className={'pd-retention-ring' + (view.progress.value === null ? ' is-empty' : '')} role="img" aria-label={`${view.progress.label.toLowerCase()}: ${view.progress.value === null ? 'not reported' : percent(view.progress.value)}`} style={{ '--retention': `${Math.min(100, Math.max(0, view.progress.value ?? 0))}%` } as CSSProperties}><div><span>{view.progress.label}</span><strong>{view.progress.value === null ? '—' : <>{view.progress.value.toFixed(1)}<small>%</small></>}</strong><span>{view.progress.value === null ? 'Not reported' : scopeLabel}</span></div></div>
             {view.progress.value !== null && <div className="pd-retention-legend"><span><i />{view.progress.achieved}</span><span><i />{view.progress.remaining}</span></div>}
-            <div className="pd-retention-note"><Icon name="info" size={14} /><p>{view.progress.value === null ? 'No performance records have been received yet.' : `${view.label} performance for the selected campus view.`}</p></div>
+            <div className="pd-retention-note"><Icon name="info" size={14} /><p>{view.progress.value === null ? 'No performance figure reported for this period.' : `${view.label} performance for the selected campus view.`}</p></div>
           </section>
         </div>}
       </>}

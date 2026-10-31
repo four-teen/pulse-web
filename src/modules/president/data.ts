@@ -1,3 +1,5 @@
+import { parseAcademicCounts, type AcademicCounts } from './academics'
+
 export type MetricValue = number | null
 export type Campus = {
   id: string
@@ -31,10 +33,12 @@ export type DashboardData = {
   categorySources: Record<string, Source['id'] | null>
   campuses: Campus[]
   sources: Source[]
+  facultyDirectory?: { total: MetricValue; byCampus: Record<string, MetricValue>; retrievedAt: string | null }
+  academicCounts?: AcademicCounts
 }
 
 export const sourceStatusLabel: Record<SourceStatus, string> = {
-  not_connected: 'Not connected', configuration_required: 'Setup required', awaiting_sync: 'Awaiting first sync',
+  not_connected: 'Not connected', configuration_required: 'Configuration required', awaiting_sync: 'No retrieved records',
   connected: 'Connected', stale: 'Update overdue', invalid_data: 'Records unavailable', period_mismatch: 'Different reporting period',
 }
 
@@ -93,6 +97,18 @@ export function parseDashboard(input: unknown): DashboardData {
   function timestamp(value: unknown, nullable = true): boolean { return value === null ? nullable : typeof value === 'string' && Number.isFinite(Date.parse(value)) }
   const data = object(input)
   const ids = new Set(['access', 'isulan', 'tacurong', 'kalamansig', 'lutayan', 'palimbang', 'bagumbayan'])
+  if (data.facultyDirectory !== undefined) {
+    const directory = object(data.facultyDirectory)
+    const counts = object(directory.byCampus)
+    if (!metric(directory.total, 'count') || !timestamp(directory.retrievedAt)
+      || Object.keys(counts).length !== ids.size || Object.keys(counts).some(id => !ids.has(id))
+      || [...ids].some(id => !metric(counts[id], 'count'))) throw new Error('Invalid faculty totals.')
+    const values = Object.values(counts)
+    if (values.some(value => typeof value === 'number' && typeof directory.total === 'number' && value > directory.total)
+      || values.every(value => typeof value === 'number') && (typeof directory.total !== 'number' || values.reduce<number>((sum, value) => sum + (value as number), 0) < directory.total)) throw new Error('Inconsistent faculty totals.')
+  }
+  const academicCounts = data.academicCounts === undefined ? undefined : parseAcademicCounts(data.academicCounts)
+  if (academicCounts?.status === 'connected' && data.periodKey !== academicCounts.term?.key) throw new Error('Academic term does not match the dashboard reporting period.')
   const sourceIds = new Set(['sinq', 'oracle', 'pad'])
   if (data.schemaVersion !== 1 || !timestamp(data.generatedAt, false) || !timestamp(data.updatedAt) || !['awaiting_data', 'partial', 'stale', 'ready'].includes(String(data.dataState)) || !(data.periodLabel === null || typeof data.periodLabel === 'string') || !(data.periodKey === null || typeof data.periodKey === 'string')) throw new Error('Invalid dashboard response.')
   if (!Array.isArray(data.campuses) || data.campuses.length !== 7 || !Array.isArray(data.sources) || data.sources.length !== 3) throw new Error('Invalid dashboard response.')
@@ -104,6 +120,8 @@ export function parseDashboard(input: unknown): DashboardData {
     for (const field of ['name', 'mark']) if (typeof campus[field] !== 'string' || (campus[field] as string).length > 80) throw new Error('Invalid campus records.')
     for (const field of ['color', 'tint']) if (typeof campus[field] !== 'string' || !/^#[0-9a-f]{6}$/i.test(campus[field] as string)) throw new Error('Invalid campus colors.')
     for (const field of ['students', 'previousStudents', 'faculty', 'programs']) if (!metric(campus[field], 'count')) throw new Error('Invalid instruction records.')
+    if (academicCounts?.status === 'connected' && (campus.faculty !== academicCounts.faculty.byCampus[campus.id]
+      || campus.students !== academicCounts.students.byCampus[campus.id])) throw new Error('Campus headcounts do not match the current academic term.')
     for (const field of ['retention', 'utilization']) if (!metric(campus[field], 'percent')) throw new Error('Invalid percentage records.')
     if (!metric(campus.budget, 'amount')) throw new Error('Invalid budget records.')
     const groups = {
