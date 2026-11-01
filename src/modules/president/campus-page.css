@@ -1,0 +1,51 @@
+.pd-campus-card { text-decoration: none; }
+.pd-campus-card:focus-visible { outline: 2px solid #a94f0c; outline-offset: 4px; }
+.pd-campus-page { scroll-margin-top: 100px; }
+.pd-campus-page:focus, .pd-campus-page h1:focus { outline: none; }
+.pd-campus-breadcrumb { min-height: 44px; padding: 0; border: 0; background: transparent; color: #284b35; font-size: inherit; font-weight: 500; }
+.pd-campus-breadcrumb:hover { text-decoration: underline; text-underline-offset: 4px; }
+.pd-campus-page-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.pd-campus-back { display: inline-flex; align-items: center; gap: 9px; min-height: 44px; color: #284b35; font-size: 13px; font-weight: 500; text-decoration: none; }
+.pd-campus-back > svg { transform: rotate(180deg); flex-shrink: 0; }
+.pd-campus-back:hover { color: #a74d13; }
+.pd-campus-back:focus-visible { outline: 2px solid #a94f0c; outline-offset: 4px; border-radius: 5px; }
+.pd-campus-page-select select { max-width: 220px; }
+.pd-campus-page-identity { display: flex; align-items: center; gap: 20px; }
+.pd-campus-page-identity > div { min-width: 0; }
+.pd-campus-page-heading .pd-campus-logo.is-large { width: 78px; height: 78px; color: #e0ebca; border-color: #d5e7b83d; outline-color: #d5e7b826; outline-offset: -7px; background: #ffffff08; }
+.pd-campus-page-heading .pd-logo-letters { font-size: 24px; }
+.pd-campus-page-heading .pd-logo-school { font-size: 7px; letter-spacing: 1.5px; }
+.pd-campus-period { display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; padding: 9px 11px; border: 1px solid #ffffff24; border-radius: 7px; color: #edf3e5; background: #ffffff08; font-size: 12px; line-height: 1.7; }
+.pd-campus-period > svg { flex-shrink: 0; }
+.pd-campus-page > .pd-fourfold { margin-top: 25px; }
+.pd-campus-page .pd-fourfold.is-compact .pd-metric-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.pd-campus-page .pd-fourfold.is-compact .pd-function-tabs > button { justify-content: flex-start; padding-inline: 15px; min-height: 54px; font-size: 14px; }
+.pd-campus-page .pd-fourfold.is-compact .pd-function-number { display: inline; }
+.pd-campus-page-assets { margin-top: 32px; padding-top: 25px; border-top: 1px solid #d6dfd3; }
+.pd-campus-page .pd-campus-page-note { margin-top: 18px; color: #586c5a; font-size: 12px; line-height: 1.8; }
+.pd-campus-page-empty { padding-block: 40px; }
+.pd-campus-page-empty h1 { font-size: 25px; line-height: 1.5; }
+.pd-campus-page-empty p { margin-top: 10px; color: #586c5a; font-size: 14px; line-height: 1.8; }
+
+@media (max-width: 1279px) {
+  .pd-campus-page > .pd-fourfold > .pd-function-tabs { display: none; }
+}
+@media (max-width: 900px) {
+  .pd-campus-page .pd-fourfold.is-compact .pd-metric-grid,
+  .pd-campus-page .pd-inventory-snapshot .pd-metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pd-campus-page-heading { align-items: flex-start; flex-direction: column; gap: 18px; }
+}
+@media (max-width: 670px) {
+  .pd-campus-page { scroll-margin-top: 90px; }
+  .pd-campus-page-toolbar { flex-wrap: wrap; gap: 6px; margin-bottom: 15px; }
+  .pd-campus-page-select { width: 100%; }
+  .pd-campus-page-select select { max-width: none; }
+  .pd-campus-page-identity { gap: 13px; }
+  .pd-campus-page-heading .pd-campus-logo.is-large { width: 56px; height: 56px; outline-offset: -5px; }
+  .pd-campus-page-heading .pd-logo-letters { font-size: 18px; }
+  .pd-campus-page-heading .pd-logo-school { font-size: 5px; }
+  .pd-campus-page-heading .pd-heading-description { font-size: 12px; line-height: 1.7; }
+  .pd-campus-period { padding: 7px 9px; font-size: 11px; }
+  .pd-campus-page > .pd-fourfold { margin-top: 13px; }
+  .pd-campus-page-assets { margin-top: 26px; padding-top: 22px; }
+}

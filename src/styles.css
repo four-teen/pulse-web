@@ -35,7 +35,7 @@ input:focus-visible { outline: none; }
 .presidential-entry {
   position: relative;
   isolation: isolate;
-  min-height: 100svh;
+  min-height: var(--entry-height, 100svh);
   overflow: clip;
   color: #f2f4de;
   background: #284b35;
@@ -70,7 +70,7 @@ input:focus-visible { outline: none; }
   display: grid;
   grid-template-rows: minmax(160px, 1fr) auto minmax(235px, 1fr);
   width: min(100%, 560px);
-  min-height: 100svh;
+  min-height: var(--entry-height, 100svh);
   margin: 0 auto;
   padding: 24px;
   text-align: center;
@@ -194,6 +194,7 @@ input:focus-visible { outline: none; }
 
 .passcode-reveal {
   width: 100%;
+  scroll-margin-block: 16px;
   text-align: left;
   animation: passcode-in .55s var(--ease) both;
 }
@@ -405,6 +406,25 @@ input:focus-visible { outline: none; }
   .seal-stage { width: 152px; height: 152px; }
   .access-stage { padding-top: 22px; }
 }
+
+/* Follow the space above a phone keyboard, including visual-only viewport resizes. */
+.gateway.is-open.is-compact {
+  grid-template-rows: auto auto auto;
+  align-content: center;
+  gap: 16px;
+  padding-top: max(16px, env(safe-area-inset-top));
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+.gateway.is-open.is-compact .identity { padding-bottom: 0; }
+.gateway.is-open.is-compact .identity h1 { font-size: 36px; }
+.gateway.is-open.is-compact .identity-description,
+.gateway.is-open.is-compact .identity-tagline { display: none; }
+.gateway.is-open.is-compact .seal-stage { width: 72px; height: 72px; }
+.gateway.is-open.is-compact .seal-aura { display: none; }
+.gateway.is-open.is-compact .access-stage { padding-top: 0; }
+.gateway.is-open.is-compact .passcode-reveal { animation: none; }
+.gateway.is-open.is-short { grid-template-rows: auto auto; }
+.gateway.is-open.is-short .seal-stage { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

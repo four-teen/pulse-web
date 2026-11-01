@@ -70,6 +70,7 @@
 .pd-campus-select svg { flex-shrink: 0; }
 .pd-campus-select select { max-width: 180px; min-height: 34px; padding-right: 3px; border: 0; color: #617356; background: transparent; font-size: 12px; cursor: pointer; }
 .pd-metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 15px; }
+.pd-operations-snapshot { margin-top: 15px; }
 .pd-metric-card { min-width: 0; padding: 18px 19px 17px; border: 1px solid var(--pd-border); border-radius: 10px; background: #fff; box-shadow: 0 3px 5px -5px #31442a30; }
 .pd-metric-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .pd-metric-top > span:first-child { color: #677762; font-size: 12px; line-height: 1.5; }
@@ -178,6 +179,8 @@
 .pd-source-mark { display: grid; place-items: center; width: 31px; height: 33px; border-radius: 6px; font-family: Manrope, sans-serif; font-weight: 600; font-size: 16px; flex-shrink: 0; background: #edf1e6; color: #617958; }
 .pd-source-mark.oracle { color: #876d59; background: #f5ede6; }
 .pd-source-card h3 { font-size: 13px; font-weight: 500; line-height: 1.5; letter-spacing: -.2px; }
+.pd-source-card > div { min-width: 0; }
+.pd-source-card h3 { overflow-wrap: anywhere; }
 .pd-source-card div > span { display: flex; align-items: center; gap: 4px; margin-top: 4px; color: #667765; font-size: 11px; }
 .pd-source-card i { width: 4px; height: 4px; border-radius: 50%; background: #bdc6b0; }
 .pd-source-card > svg { flex-shrink: 0; margin-left: auto; color: #657765; }
@@ -276,6 +279,7 @@
 .pd-campus-select svg { width: 13px; }
 .pd-campus-select select { max-width: 123px; font-size: 11px; }
 .pd-metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.pd-operations-snapshot { margin-top: 10px; }
 .pd-metric-card { padding: 13px 14px 15px; }
 .pd-metric-top { gap: 5px; }
 .pd-metric-top > span:first-child { font-size: 11px; }
@@ -623,6 +627,7 @@ to { opacity: 1; transform: translateY(0); } }
 .pd-fourfold.is-compact .pd-function-tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 @media (max-width: 1279px) {
   .pd-overview > .pd-fourfold > .pd-function-tabs { display: none; }
+  .pd-wide-only { display: none; }
   .pd-mobile-logout { display: inline-grid; }
   .pd-bottom-nav > button[aria-current='page'] { color: #345d35; font-weight: 600; }
   .pd-bottom-nav > button[aria-current='page'] > span { background: #eaf1df; }

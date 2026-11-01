@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react'
 import { flushSync } from 'react-dom'
 import { ApiError, auth, type President } from './api'
 import PulseWordmark from './components/PulseWordmark'
@@ -34,6 +34,7 @@ export default function App() {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [announcement, setAnnouncement] = useState('')
+  const [entryHeight, setEntryHeight] = useState<number | null>(null)
   const sealButton = useRef<HTMLButtonElement>(null)
   const passcodeInput = useRef<HTMLInputElement>(null)
 
@@ -60,6 +61,33 @@ export default function App() {
     return () => { active = false }
   }, [])
 
+  useEffect(() => {
+    if (user) return
+    const viewport = window.visualViewport
+    const updateHeight = () => {
+      // Phone keyboards can resize only the visible viewport, leaving svh unchanged.
+      // Leave pinch zoom to the browser rather than rearranging a zoomed page.
+      if (viewport && Math.abs(viewport.scale - 1) > .01) return
+      setEntryHeight(Math.round(viewport?.height ?? window.innerHeight))
+    }
+    updateHeight()
+    viewport?.addEventListener('resize', updateHeight)
+    window.addEventListener('resize', updateHeight)
+    return () => {
+      viewport?.removeEventListener('resize', updateHeight)
+      window.removeEventListener('resize', updateHeight)
+    }
+  }, [user])
+
+  useEffect(() => {
+    if (!opened || user) return
+    // Wait for the compact layout before bringing the field and its actions into view.
+    const frame = requestAnimationFrame(() => {
+      passcodeInput.current?.closest('form')?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [opened, user, entryHeight, error, notice])
+
   function closePasscode() {
     if (busy) return
     setOpened(false)
@@ -76,7 +104,7 @@ export default function App() {
     }
     // Mount and focus within the tap event so phone keyboards open immediately.
     flushSync(() => setOpened(true))
-    passcodeInput.current?.focus({ preventScroll: true })
+    passcodeInput.current?.focus()
   }
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
@@ -93,7 +121,7 @@ export default function App() {
       setOpened(false)
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Unable to unlock PULSE. Please try again.')
-      passcodeInput.current?.focus({ preventScroll: true })
+      passcodeInput.current?.focus()
       passcodeInput.current?.select()
     } finally {
       setBusy(false)
@@ -127,8 +155,11 @@ export default function App() {
   }
 
   return (
-    <main className="presidential-entry" aria-label="PULSE presidential portal">
-      <div className={'gateway' + (opened ? ' is-open' : '')}>
+    <main className="presidential-entry" aria-label="PULSE presidential portal"
+      style={entryHeight === null ? undefined : { '--entry-height': `${entryHeight}px` } as CSSProperties}>
+      <div className={'gateway' + (opened ? ' is-open' : '')
+        + (entryHeight !== null && entryHeight < 600 ? ' is-compact' : '')
+        + (entryHeight !== null && entryHeight < 360 ? ' is-short' : '')}>
         <div className="identity">
           <h1 title="Presidential Unified Leadership, Statistics, and Evaluation"><PulseWordmark /></h1>
           <p className="identity-description">Presidential Unified Leadership, Statistics, and Evaluation</p>

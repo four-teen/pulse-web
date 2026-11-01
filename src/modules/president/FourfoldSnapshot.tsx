@@ -136,7 +136,7 @@ export default function FourfoldSnapshot({ items, scopeLabel, idPrefix, compact 
       </button>)}
     </div>
 
-    {functionOrder.map(id => <div key={id} role={id === 'overview' ? 'region' : 'tabpanel'} id={`${idPrefix}-panel-${id}`} aria-label={id === 'overview' ? 'University overview' : undefined} aria-labelledby={id === 'overview' ? undefined : `${idPrefix}-tab-${id}`} tabIndex={0} hidden={activeFunction !== id}>
+    {functionOrder.map(id => <div key={id} role={id === 'overview' ? 'region' : 'tabpanel'} id={`${idPrefix}-panel-${id}`} aria-label={id === 'overview' ? scopeLabel === 'University-wide' ? 'University overview' : `${scopeLabel} overview` : undefined} aria-labelledby={id === 'overview' ? undefined : `${idPrefix}-tab-${id}`} tabIndex={0} hidden={activeFunction !== id}>
       {activeFunction === id && <>
         <div className="pd-function-context"><span>{view.label}</span><p>{view.description}</p></div>
         <div className="pd-metric-grid">{view.metrics.map(metric => <article key={metric.label} className="pd-metric-card"><div className="pd-metric-top"><span>{metric.label}</span><span className={`pd-metric-icon ${metric.tint}`}><Icon name={metric.icon} size={19} /></span></div><strong className={'pd-metric-number' + (metric.value === '—' ? ' is-missing' : '')}>{metric.value}</strong><div className="pd-metric-footer"><span>{metric.footer}</span></div></article>)}</div>
@@ -153,7 +153,7 @@ export default function FourfoldSnapshot({ items, scopeLabel, idPrefix, compact 
                   aria-label={`${campus.name}: ${value === null ? 'not reported' : formatChart(value) + ' ' + view.measures[measure].toLowerCase()}. Filter overview.`}
                   aria-pressed={selectedCampusId === campus.id} onClick={() => onCampusSelect?.(selectedCampusId === campus.id ? 'all' : campus.id)}>
                   <span className="pd-bar-label">{campus.name}</span><span className="pd-bar-track" style={{ '--zero-position': hasNegative ? '50%' : '0%' } as CSSProperties}>
-                    {value !== null && value !== 0 && <span className="pd-bar-fill" style={{ position: 'absolute', left: `${(hasNegative ? 50 : 0) - (value < 0 ? width : 0)}%`, width: `${width}%`, background: value < 0 ? '#a8654c' : campus.color }} />}
+                    {value !== null && value !== 0 && <span className="pd-bar-fill" style={{ position: 'absolute', left: `${(hasNegative ? 50 : 0) - (value < 0 ? width : 0)}%`, width: `${width}%`, background: value < 0 ? '#a8654c' : selectedCampusId === campus.id ? 'var(--pd-chart-highlight, #c86626)' : campus.color }} />}
                   </span><strong>{formatChart(value)}</strong>
                 </button>
               })}</div>
@@ -170,6 +170,23 @@ export default function FourfoldSnapshot({ items, scopeLabel, idPrefix, compact 
         </div>}
       </>}
     </div>)}
+  </div>
+}
+
+export function OperationsSnapshot() {
+  // These sources are not connected yet; an unknown total must not be shown as zero.
+  const metrics: Metric[] = [
+    { label: 'Travel', value: number(null), icon: 'travel', footer: 'TO tracking', tint: 'green' },
+    { label: 'Vehicle', value: number(null), icon: 'vehicle', footer: 'University vehicle routing', tint: 'gold' },
+    { label: 'Employee', value: number(null), icon: 'employee', footer: 'Track employee On/Off Campus', tint: 'blue' },
+    { label: 'Document', value: number(null), icon: 'document', footer: 'Total document transactions', tint: 'sage' },
+  ]
+  return <div className="pd-operations-snapshot pd-metric-grid" role="group" aria-label="University operations">
+    {metrics.map(metric => <article key={metric.label} className="pd-metric-card">
+      <div className="pd-metric-top"><span>{metric.label}</span><span className={`pd-metric-icon ${metric.tint}`}><Icon name={metric.icon} size={19} /></span></div>
+      <strong className="pd-metric-number is-missing" aria-label="Not reported">{metric.value}</strong>
+      <div className="pd-metric-footer"><span>{metric.footer}</span></div>
+    </article>)}
   </div>
 }
 
