@@ -1,7 +1,11 @@
-export type DashboardIconName = 'overview' | 'campus' | 'connections' | 'students' | 'faculty' | 'programs' | 'budget' | 'arrow' | 'chevron' | 'trend' | 'search' | 'close' | 'menu' | 'logout' | 'shield' | 'calendar' | 'info' | 'check' | 'research' | 'extension' | 'production' | 'buildings' | 'assets' | 'refresh'
+export type DashboardIconName = 'overview' | 'campus' | 'connections' | 'students' | 'faculty' | 'programs' | 'budget' | 'arrow' | 'chevron' | 'trend' | 'search' | 'close' | 'menu' | 'logout' | 'shield' | 'calendar' | 'info' | 'check' | 'research' | 'extension' | 'production' | 'buildings' | 'assets' | 'refresh' | 'travel' | 'vehicle' | 'employee' | 'document'
 
 export default function DashboardIcon({ name, size = 20 }: { name: DashboardIconName; size?: number }) {
   const paths = {
+    travel: <><path d="m22 2-7 20-4-9-9-4 20-7ZM22 2 11 13" /></>,
+    vehicle: <><rect x="5" y="3" width="14" height="16" rx="3" /><path d="M5 10h14M12 3v7M7 19v2m10-2v2M8 15h1m6 0h1" /></>,
+    employee: <><circle cx="8" cy="7" r="3" /><path d="M2 21v-2a6 6 0 0 1 9-5m10 0c0 3-4 7-4 7s-4-4-4-7a4 4 0 0 1 8 0Z" /><circle cx="17" cy="14" r="1" /></>,
+    document: <><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Zm0 0v6h6M8 13h8m-8 4h6" /></>,
     refresh: <><path d="M20 8a8 8 0 0 0-14-3L3 8m0 0V3m0 5h5M4 16a8 8 0 0 0 14 3l3-3m0 0v5m0-5h-5" /></>,
     research: <><path d="M9 3h6m-5 0v6l-6 9a2 2 0 0 0 2 3h12a2 2 0 0 0 2-3l-6-9V3M7 14h10" /><circle cx="11" cy="17" r=".5" /></>,
     extension: <><circle cx="12" cy="5" r="2" /><circle cx="5" cy="17" r="2" /><circle cx="19" cy="17" r="2" /><path d="M12 7v5m0 0-6 3m6-3 6 3M4 7l2 3m14-3-2 3M10 20h4" /></>,
